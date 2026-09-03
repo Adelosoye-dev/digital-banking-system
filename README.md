@@ -3,6 +3,14 @@
 Core backend for a start-up bank, built on **Express + MongoDB** and integrated with the
 **NibssByPhoenix** core-banking APIs.
 
+> **Live:** https://fet-bank-api.onrender.com &nbsp;·&nbsp;
+> **API docs:** https://fet-bank-api.onrender.com/docs &nbsp;·&nbsp;
+> **Health:** https://fet-bank-api.onrender.com/api/v1/health
+>
+> Registered with NibssByPhoenix as **FET Bank**, bank code **600**.
+> Hosted on Render (free tier) with MongoDB Atlas. The instance sleeps after ~15 minutes
+> idle, so the first request after a quiet period takes ~50s to wake.
+
 It covers the full customer journey — registration, BVN/NIN onboarding, account opening with
 pre-funding, name enquiry, intra- and inter-bank transfers, balance and transaction status
 checks — with per-customer data isolation enforced at the query layer.
