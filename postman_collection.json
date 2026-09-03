@@ -1,0 +1,298 @@
+{
+  "info": {
+    "name": "Digital Banking System",
+    "description": "Core banking API built on NibssByPhoenix. Run the requests top to bottom - the access token and account number are captured automatically into collection variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000/api/v1" },
+    { "key": "token", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "accountNumber", "value": "" },
+    { "key": "reference", "value": "" },
+    { "key": "beneficiaryAccountNumber", "value": "" },
+    { "key": "email", "value": "" }
+  ],
+  "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": { "method": "GET", "url": "{{baseUrl}}/health", "auth": { "type": "noauth" } }
+        },
+        {
+          "name": "Provider health",
+          "request": { "method": "GET", "url": "{{baseUrl}}/health/provider", "auth": { "type": "noauth" } }
+        }
+      ]
+    },
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Fresh identity on every run so the collection is re-runnable.",
+                  "const stamp = String(Date.now()).slice(-7);",
+                  "pm.collectionVariables.set('email', `customer${stamp}@example.com`);",
+                  "pm.collectionVariables.set('phone', `0801${stamp}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('registered', () => pm.response.to.have.status(201));",
+                  "const d = pm.response.json().data;",
+                  "pm.collectionVariables.set('token', d.tokens.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', d.tokens.refreshToken);",
+                  "pm.test('next step is COMPLETE_KYC', () => pm.expect(d.nextStep).to.eql('COMPLETE_KYC'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"{{email}}\",\n  \"phone\": \"{{phone}}\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"password\": \"Passw0rd1\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('logged in', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('token', pm.response.json().data.tokens.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"Passw0rd1\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Refresh token",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/refresh",
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" }
+          }
+        },
+        { "name": "Me", "request": { "method": "GET", "url": "{{baseUrl}}/auth/me" } },
+        {
+          "name": "Change password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/change-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Passw0rd1\",\n  \"newPassword\": \"NewPassw0rd2\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. KYC",
+      "item": [
+        {
+          "name": "Create + verify BVN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('BVN verified', () => pm.response.to.have.status(201));",
+                  "const d = pm.response.json().data;",
+                  "pm.collectionVariables.set('bvn', d.bvn);",
+                  "pm.test('can now open an account', () => pm.expect(d.kyc.canCreateAccount).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/kyc/bvn",
+            "description": "Omit bvn to have a synthetic 11-digit test value generated. Identity fields default to the registered profile.",
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        },
+        {
+          "name": "Create + verify NIN",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/kyc/nin",
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        },
+        {
+          "name": "Link an existing BVN/NIN",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/kyc/verify",
+            "body": { "mode": "raw", "raw": "{\n  \"type\": \"BVN\",\n  \"identifier\": \"12345678901\"\n}" }
+          }
+        },
+        { "name": "KYC status", "request": { "method": "GET", "url": "{{baseUrl}}/kyc/status" } }
+      ]
+    },
+    {
+      "name": "3. Accounts",
+      "item": [
+        {
+          "name": "Open account (pre-funded NGN 15,000)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('account opened', () => pm.response.to.have.status(201));",
+                  "const d = pm.response.json().data;",
+                  "pm.collectionVariables.set('accountNumber', d.account.accountNumber);",
+                  "pm.test('pre-funded with 15,000', () => pm.expect(d.account.balance.amount).to.eql(15000));"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "POST", "url": "{{baseUrl}}/accounts" }
+        },
+        { "name": "My account", "request": { "method": "GET", "url": "{{baseUrl}}/accounts/me" } },
+        {
+          "name": "Balance (live)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/accounts/balance" }
+        },
+        {
+          "name": "Balance (ledger only)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/accounts/balance?refresh=false" }
+        },
+        {
+          "name": "Name enquiry",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('resolved', () => pm.expect(pm.response.json().data.accountName).to.be.a('string'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/accounts/name-enquiry/{{beneficiaryAccountNumber}}",
+            "description": "Set beneficiaryAccountNumber first - another account you created, or a colleague's."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Transfers",
+      "item": [
+        {
+          "name": "Transfer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ([200, 201, 202].includes(pm.response.code)) {",
+                  "  pm.collectionVariables.set('reference', pm.response.json().data.transaction.reference);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/transfers",
+            "description": "The source account comes from the token. Intra- vs inter-bank is decided by whether the destination is held in this bank.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destinationAccountNumber\": \"{{beneficiaryAccountNumber}}\",\n  \"amount\": 2500,\n  \"narration\": \"Test transfer\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Transfer (idempotent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "demo-key-000001" }
+            ],
+            "url": "{{baseUrl}}/transfers",
+            "description": "Send this twice - the second call returns the original transaction with replayed: true.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destinationAccountNumber\": \"{{beneficiaryAccountNumber}}\",\n  \"amount\": 100,\n  \"narration\": \"Idempotency demo\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Transactions",
+      "item": [
+        {
+          "name": "History",
+          "request": { "method": "GET", "url": "{{baseUrl}}/transactions?page=1&limit=20" }
+        },
+        {
+          "name": "History (filtered)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/transactions?direction=DEBIT&status=SUCCESS&minAmount=100"
+          }
+        },
+        { "name": "Summary", "request": { "method": "GET", "url": "{{baseUrl}}/transactions/summary" } },
+        {
+          "name": "Status check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/transactions/{{reference}}",
+            "description": "Refreshes a pending transaction against NibssByPhoenix and settles the ledger."
+          }
+        }
+      ]
+    }
+  ]
+}

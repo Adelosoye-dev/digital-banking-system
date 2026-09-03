@@ -1,0 +1,56 @@
+'use strict';
+
+const KYC_TYPE = Object.freeze({ BVN: 'BVN', NIN: 'NIN' });
+
+const KYC_STATUS = Object.freeze({
+  PENDING: 'PENDING',
+  VERIFIED: 'VERIFIED',
+  FAILED: 'FAILED',
+});
+
+const CUSTOMER_STATUS = Object.freeze({
+  PENDING_KYC: 'PENDING_KYC',
+  KYC_VERIFIED: 'KYC_VERIFIED',
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED',
+});
+
+const ACCOUNT_STATUS = Object.freeze({
+  ACTIVE: 'ACTIVE',
+  DORMANT: 'DORMANT',
+  FROZEN: 'FROZEN',
+  CLOSED: 'CLOSED',
+});
+
+const TXN_TYPE = Object.freeze({
+  OPENING_CREDIT: 'OPENING_CREDIT',
+  INTRA_BANK_TRANSFER: 'INTRA_BANK_TRANSFER',
+  INTER_BANK_TRANSFER: 'INTER_BANK_TRANSFER',
+});
+
+const TXN_DIRECTION = Object.freeze({ DEBIT: 'DEBIT', CREDIT: 'CREDIT' });
+
+const TXN_STATUS = Object.freeze({
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED',
+  REVERSED: 'REVERSED',
+});
+
+/** Terminal states never change again, so status polling can stop. */
+const TERMINAL_TXN_STATUSES = Object.freeze([TXN_STATUS.SUCCESS, TXN_STATUS.FAILED, TXN_STATUS.REVERSED]);
+
+const ROLE = Object.freeze({ CUSTOMER: 'CUSTOMER', ADMIN: 'ADMIN' });
+
+module.exports = {
+  KYC_TYPE,
+  KYC_STATUS,
+  CUSTOMER_STATUS,
+  ACCOUNT_STATUS,
+  TXN_TYPE,
+  TXN_DIRECTION,
+  TXN_STATUS,
+  TERMINAL_TXN_STATUSES,
+  ROLE,
+};
