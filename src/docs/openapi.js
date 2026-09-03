@@ -104,7 +104,13 @@ module.exports = {
       'transaction reference belonging to another customer returns 404.',
     ].join('\n'),
   },
-  servers: [{ url: `http://localhost:${env.PORT}`, description: 'Local' }],
+  /**
+   * Relative, so "Try it out" always targets whatever host is serving these
+   * docs. An absolute localhost URL here breaks the hosted docs completely:
+   * the browser would try to reach the container's internal port and fail
+   * with an opaque "Failed to fetch".
+   */
+  servers: [{ url: '/', description: 'This server' }],
   tags: [
     { name: 'Health', description: 'Liveness and provider connectivity' },
     { name: 'Auth', description: 'Customer registration and sessions' },
