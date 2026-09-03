@@ -299,7 +299,7 @@ two NibssByPhoenix credentials need filling in.
 |---|---|---|
 | `PORT` | `4000` | |
 | `API_PREFIX` | `/api/v1` | |
-| `BANK_NAME` | `Phoenix Trust Bank` | Name registered with NibssByPhoenix |
+| `BANK_NAME` | `FET Bank` | Name registered with NibssByPhoenix |
 | `MONGODB_URI` | `mongodb://127.0.0.1:27017/digital_banking` | |
 | `JWT_SECRET` | *(generated)* | Min 16 chars |
 | `JWT_EXPIRES_IN` | `1h` | |
